@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiquidGlass Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: row;
+        }
+
+        /* Left Panel - Preview */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            min-width: 0;
+        }
+
+        .preview-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1;
+            background-image: url('./sample_image.avif');
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .glass-object {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            height: 50%;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            word-wrap: break-word;
+            overflow: hidden;
+        }
+
+        .glass-text {
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            line-height: 1.4;
+        }
+
+        /* Right Panel - Editor */
+        .editor-panel {
+            width: 450px;
+            min-width: 320px;
+            max-width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            overflow-y: auto;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .editor-header {
+            padding: 0;
+            background-image: url('./liquidglass_lab.avif');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-content {
+            padding: 30px;
+            width: 100%;
+        }
+
+        .header-text h1 {
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-text p {
+            font-size: clamp(12px, 3vw, 14px);
+            opacity: 0.95;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-section {
+            padding: 25px 30px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-value {
+            float: right;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border: 2px solid #667eea;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border: 2px solid #667eea;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="number"],
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-weight: 400;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        .action-button.secondary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .action-button.secondary:hover {
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
+        }
+
+        .button-icon {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+            margin: 30px 0;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .editor-panel {
+                width: 400px;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .preview-panel {
+                height: 50vh;
+                padding: 15px;
+            }
+
+            .preview-wrapper {
+                max-width: 90vw;
+                max-height: 90%;
+            }
+
+            .editor-panel {
+                width: 100%;
+                height: 50vh;
+                border-left: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .editor-header {
+                padding: 0;
+                min-height: 100px;
+            }
+
+            .header-content {
+                padding: 20px;
+            }
+
+            .controls-section {
+                padding: 20px;
+            }
+
+            .control-group {
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .preview-panel {
+                padding: 10px;
+            }
+
+            .editor-header {
+                padding: 15px;
+            }
+
+            .controls-section {
+                padding: 15px;
+            }
+
+            .control-label {
+                font-size: 11px;
+            }
+
+            .action-button {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .header-icon {
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <svg style="display: none;">
+        <defs>
+            <filter id="liquidGlass" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox">
+                <feTurbulence 
+                    id="turbulence"
+                    type="fractalNoise" 
+                    baseFrequency="0.01" 
+                    numOctaves="2" 
+                    seed="5" 
+                    result="turbulence">
+                </feTurbulence>
+
+                <feComponentTransfer in="turbulence" result="mapped">
+                    <feFuncR id="funcR" type="gamma" amplitude="1" exponent="10" offset="0.5" />
+                    <feFuncG id="funcG" type="gamma" amplitude="0" exponent="1" offset="0" />
+                    <feFuncB id="funcB" type="gamma" amplitude="0" exponent="1" offset="0.5" />
+                </feComponentTransfer>
+
+                <feGaussianBlur id="blur" in="SourceGraphic" stdDeviation="2" result="blur" />
+
+                <feDisplacementMap 
+                    id="displacement"
+                    in="blur" 
+                    in2="mapped" 
+                    scale="50" 
+                    xChannelSelector="R" 
+                    yChannelSelector="G" 
+                    result="displaced">
+                </feDisplacementMap>
+
+                <feSpecularLighting 
+                    id="specular"
+                    in="mapped" 
+                    surfaceScale="5" 
+                    specularConstant="1" 
+                    specularExponent="100" 
+                    lighting-color="white" 
+                    result="specLight">
+                    <fePointLight id="pointLight" x="-200" y="-200" z="300" />
+                </feSpecularLighting>
+
+                <feComposite 
+                    in="specLight" 
+                    in2="displaced" 
+                    operator="arithmetic" 
+                    k1="0" 
+                    k2="1" 
+                    k3="1" 
+                    k4="0" 
+                    result="lit">
+                </feComposite>
+
+                <feColorMatrix 
+                    id="colorMatrix"
+                    type="matrix" 
+                    values="1 0 0 0 0
+                            0 1 0 0 0
+                            0 0 1 0 0
+                            0 0 0 0.8 0"
+                    result="tinted">
+                </feColorMatrix>
+
+                <feBlend in="tinted" in2="SourceGraphic" mode="normal" />
+            </filter>
+        </defs>
+
+        <!-- SVG Icons -->
+        <symbol id="icon-refresh" viewBox="0 0 24 24">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24">
+            <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+        </symbol>
+    </svg>
+
+    <div class="container">
+        <!-- Left Panel: Preview -->
+        <div class="preview-panel">
+            <div class="preview-wrapper">
+                <div class="glass-object" id="glassObject">
+                    <div class="glass-text" id="glassText">Click Me</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Editor -->
+        <div class="editor-panel">
+            <div class="editor-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1>LiquidGlass Lab</h1>
+                        <p>リアルタイムでLiquidGlassエフェクトを調整</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <!-- Text Settings -->
+                <div class="section-title">テキスト設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">ボタンテキスト</label>
+                    <textarea id="buttonText" rows="3">Click Me</textarea>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        フォントサイズ
+                        <span class="control-value" id="fontSizeValue">24px</span>
+                    </label>
+                    <input type="range" id="fontSize" min="8" max="72" step="1" value="24">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">テキストカラー</label>
+                    <input type="color" id="textColor" value="#ffffff">
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Background Settings -->
+                <div class="section-title">背景設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        背景の不透明度
+                        <span class="control-value" id="bgOpacityValue">0.15</span>
+                    </label>
+                    <input type="range" id="bgOpacity" min="0" max="1" step="0.01" value="0.15">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">背景カラー</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Blur Settings -->
+                <div class="section-title">ブラー設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Backdrop Blur
+                        <span class="control-value" id="backdropBlurValue">20px</span>
+                    </label>
+                    <input type="range" id="backdropBlur" min="0" max="50" step="1" value="20">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Gaussian Blur
+                        <span class="control-value" id="gaussianBlurValue">2</span>
+                    </label>
+                    <input type="range" id="gaussianBlur" min="0" max="20" step="0.1" value="2">
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Turbulence Settings -->
+                <div class="section-title">タービュランス設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Frequency
+                        <span class="control-value" id="turbFreqValue">0.01</span>
+                    </label>
+                    <input type="range" id="turbFreq" min="0.001" max="0.1" step="0.001" value="0.01">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Octaves
+                        <span class="control-value" id="turbOctavesValue">2</span>
+                    </label>
+                    <input type="range" id="turbOctaves" min="1" max="10" step="1" value="2">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Seed
+                        <span class="control-value" id="turbSeedValue">5</span>
+                    </label>
+                    <input type="range" id="turbSeed" min="1" max="200" step="1" value="5">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Type</label>
+                    <select id="turbType">
+                        <option value="fractalNoise" selected>Fractal Noise</option>
+                        <option value="turbulence">Turbulence</option>
+                    </select>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Displacement Settings -->
+                <div class="section-title">ディスプレイスメント設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Scale
+                        <span class="control-value" id="dispScaleValue">50</span>
+                    </label>
+                    <input type="range" id="dispScale" min="-200" max="200" step="1" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">X Channel</label>
+                    <select id="xChannel">
+                        <option value="R" selected>Red</option>
+                        <option value="G">Green</option>
+                        <option value="B">Blue</option>
+                        <option value="A">Alpha</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Y Channel</label>
+                    <select id="yChannel">
+                        <option value="R">Red</option>
+                        <option value="G" selected>Green</option>
+                        <option value="B">Blue</option>
+                        <option value="A">Alpha</option>
+                    </select>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Specular Lighting Settings -->
+                <div class="section-title">スペキュラーライティング設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Surface Scale
+                        <span class="control-value" id="surfaceScaleValue">5</span>
+                    </label>
+                    <input type="range" id="surfaceScale" min="0" max="20" step="0.1" value="5">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Specular Constant
+                        <span class="control-value" id="specConstantValue">1</span>
+                    </label>
+                    <input type="range" id="specConstant" min="0" max="5" step="0.1" value="1">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Specular Exponent
+                        <span class="control-value" id="specExponentValue">100</span>
+                    </label>
+                    <input type="range" id="specExponent" min="1" max="200" step="1" value="100">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Lighting Color</label>
+                    <input type="color" id="lightingColor" value="#ffffff">
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Point Light Settings -->
+                <div class="section-title">ポイントライト設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Light X
+                        <span class="control-value" id="lightXValue">-200</span>
+                    </label>
+                    <input type="range" id="lightX" min="-500" max="500" step="10" value="-200">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Light Y
+                        <span class="control-value" id="lightYValue">-200</span>
+                    </label>
+                    <input type="range" id="lightY" min="-500" max="500" step="10" value="-200">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Light Z
+                        <span class="control-value" id="lightZValue">300</span>
+                    </label>
+                    <input type="range" id="lightZ" min="0" max="1000" step="10" value="300">
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Border Settings -->
+                <div class="section-title">ボーダー設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Border Width
+                        <span class="control-value" id="borderWidthValue">1px</span>
+                    </label>
+                    <input type="range" id="borderWidth" min="0" max="10" step="1" value="1">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Border Opacity
+                        <span class="control-value" id="borderOpacityValue">0.3</span>
+                    </label>
+                    <input type="range" id="borderOpacity" min="0" max="1" step="0.01" value="0.3">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Border Radius
+                        <span class="control-value" id="borderRadiusValue">40px</span>
+                    </label>
+                    <input type="range" id="borderRadius" min="0" max="150" step="5" value="40">
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Shadow Settings -->
+                <div class="section-title">シャドウ設定</div>
+                
+                <div class="control-group">
+                    <label class="control-label">
+                        Shadow Blur
+                        <span class="control-value" id="shadowBlurValue">32px</span>
+                    </label>
+                    <input type="range" id="shadowBlur" min="0" max="100" step="1" value="32">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        Shadow Opacity
+                        <span class="control-value" id="shadowOpacityValue">0.2</span>
+                    </label>
+                    <input type="range" id="shadowOpacity" min="0" max="1" step="0.01" value="0.2">
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="action-button secondary" onclick="downloadHTML()">
+                    <svg class="button-icon"><use href="#icon-download"/></svg>
+                    HTMLをダウンロード
+                </button>
+
+                <button class="action-button" onclick="resetDefaults()">
+                    <svg class="button-icon"><use href="#icon-refresh"/></svg>
+                    デフォルトに戻す
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const glassObject = document.getElementById('glassObject');
+        const glassText = document.getElementById('glassText');
+        
+        // All control elements
+        const controls = {
+            buttonText: document.getElementById('buttonText'),
+            fontSize: document.getElementById('fontSize'),
+            textColor: document.getElementById('textColor'),
+            bgOpacity: document.getElementById('bgOpacity'),
+            bgColor: document.getElementById('bgColor'),
+            backdropBlur: document.getElementById('backdropBlur'),
+            gaussianBlur: document.getElementById('gaussianBlur'),
+            turbFreq: document.getElementById('turbFreq'),
+            turbOctaves: document.getElementById('turbOctaves'),
+            turbSeed: document.getElementById('turbSeed'),
+            turbType: document.getElementById('turbType'),
+            dispScale: document.getElementById('dispScale'),
+            xChannel: document.getElementById('xChannel'),
+            yChannel: document.getElementById('yChannel'),
+            surfaceScale: document.getElementById('surfaceScale'),
+            specConstant: document.getElementById('specConstant'),
+            specExponent: document.getElementById('specExponent'),
+            lightingColor: document.getElementById('lightingColor'),
+            lightX: document.getElementById('lightX'),
+            lightY: document.getElementById('lightY'),
+            lightZ: document.getElementById('lightZ'),
+            borderWidth: document.getElementById('borderWidth'),
+            borderOpacity: document.getElementById('borderOpacity'),
+            borderRadius: document.getElementById('borderRadius'),
+            shadowBlur: document.getElementById('shadowBlur'),
+            shadowOpacity: document.getElementById('shadowOpacity')
+        };
+
+        // SVG filter elements
+        const turbulence = document.getElementById('turbulence');
+        const blur = document.getElementById('blur');
+        const displacement = document.getElementById('displacement');
+        const specular = document.getElementById('specular');
+        const pointLight = document.getElementById('pointLight');
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function updateGlassEffect() {
+            // Update text
+            glassText.textContent = controls.buttonText.value;
+            glassText.style.fontSize = controls.fontSize.value + 'px';
+            glassText.style.color = controls.textColor.value;
+
+            // Update background
+            const bgRgb = hexToRgb(controls.bgColor.value);
+            const bgOpacity = parseFloat(controls.bgOpacity.value);
+            
+            glassObject.style.background = `rgba(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b}, ${bgOpacity})`;
+            glassObject.style.backdropFilter = `blur(${controls.backdropBlur.value}px)`;
+            glassObject.style.webkitBackdropFilter = `blur(${controls.backdropBlur.value}px)`;
+            glassObject.style.border = `${controls.borderWidth.value}px solid rgba(255, 255, 255, ${controls.borderOpacity.value})`;
+            glassObject.style.borderRadius = `${controls.borderRadius.value}px`;
+            glassObject.style.boxShadow = `0 8px ${controls.shadowBlur.value}px rgba(0, 0, 0, ${controls.shadowOpacity.value}), inset 0 4px 20px rgba(255, 255, 255, 0.3)`;
+            glassObject.style.filter = 'url(#liquidGlass)';
+
+            // Update SVG filter parameters
+            blur.setAttribute('stdDeviation', controls.gaussianBlur.value);
+            turbulence.setAttribute('baseFrequency', controls.turbFreq.value);
+            turbulence.setAttribute('numOctaves', controls.turbOctaves.value);
+            turbulence.setAttribute('seed', controls.turbSeed.value);
+            turbulence.setAttribute('type', controls.turbType.value);
+            displacement.setAttribute('scale', controls.dispScale.value);
+            displacement.setAttribute('xChannelSelector', controls.xChannel.value);
+            displacement.setAttribute('yChannelSelector', controls.yChannel.value);
+            specular.setAttribute('surfaceScale', controls.surfaceScale.value);
+            specular.setAttribute('specularConstant', controls.specConstant.value);
+            specular.setAttribute('specularExponent', controls.specExponent.value);
+            specular.setAttribute('lighting-color', controls.lightingColor.value);
+            pointLight.setAttribute('x', controls.lightX.value);
+            pointLight.setAttribute('y', controls.lightY.value);
+            pointLight.setAttribute('z', controls.lightZ.value);
+
+            // Update display values
+            document.getElementById('fontSizeValue').textContent = controls.fontSize.value + 'px';
+            document.getElementById('bgOpacityValue').textContent = controls.bgOpacity.value;
+            document.getElementById('backdropBlurValue').textContent = controls.backdropBlur.value + 'px';
+            document.getElementById('gaussianBlurValue').textContent = controls.gaussianBlur.value;
+            document.getElementById('turbFreqValue').textContent = controls.turbFreq.value;
+            document.getElementById('turbOctavesValue').textContent = controls.turbOctaves.value;
+            document.getElementById('turbSeedValue').textContent = controls.turbSeed.value;
+            document.getElementById('dispScaleValue').textContent = controls.dispScale.value;
+            document.getElementById('surfaceScaleValue').textContent = controls.surfaceScale.value;
+            document.getElementById('specConstantValue').textContent = controls.specConstant.value;
+            document.getElementById('specExponentValue').textContent = controls.specExponent.value;
+            document.getElementById('lightXValue').textContent = controls.lightX.value;
+            document.getElementById('lightYValue').textContent = controls.lightY.value;
+            document.getElementById('lightZValue').textContent = controls.lightZ.value;
+            document.getElementById('borderWidthValue').textContent = controls.borderWidth.value + 'px';
+            document.getElementById('borderOpacityValue').textContent = controls.borderOpacity.value;
+            document.getElementById('borderRadiusValue').textContent = controls.borderRadius.value + 'px';
+            document.getElementById('shadowBlurValue').textContent = controls.shadowBlur.value + 'px';
+            document.getElementById('shadowOpacityValue').textContent = controls.shadowOpacity.value;
+        }
+
+        function generateButtonHTML() {
+            const bgRgb = hexToRgb(controls.bgColor.value);
+            const textRgb = hexToRgb(controls.textColor.value);
+            
+            return `<!-- LiquidGlass Button -->
+<style>
+.liquidglass-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 40px;
+    background: rgba(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b}, ${controls.bgOpacity.value});
+    backdrop-filter: blur(${controls.backdropBlur.value}px);
+    -webkit-backdrop-filter: blur(${controls.backdropBlur.value}px);
+    border: ${controls.borderWidth.value}px solid rgba(255, 255, 255, ${controls.borderOpacity.value});
+    border-radius: ${controls.borderRadius.value}px;
+    box-shadow: 0 8px ${controls.shadowBlur.value}px rgba(0, 0, 0, ${controls.shadowOpacity.value}), 
+                inset 0 4px 20px rgba(255, 255, 255, 0.3);
+    filter: url(#liquidGlass);
+    color: rgb(${textRgb.r}, ${textRgb.g}, ${textRgb.b});
+    font-size: ${controls.fontSize.value}px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+    outline: none;
+}
+
+.liquidglass-button:hover {
+    transform: translateY(-2px);
+}
+
+.liquidglass-button:active {
+    transform: translateY(0);
+}
+</style>
+
+<svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+        <filter id="liquidGlass" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence 
+                type="${controls.turbType.value}" 
+                baseFrequency="${controls.turbFreq.value}" 
+                numOctaves="${controls.turbOctaves.value}" 
+                seed="${controls.turbSeed.value}" 
+                result="turbulence">
+            </feTurbulence>
+            <feComponentTransfer in="turbulence" result="mapped">
+                <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+                <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+                <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+            </feComponentTransfer>
+            <feGaussianBlur in="SourceGraphic" stdDeviation="${controls.gaussianBlur.value}" result="blur" />
+            <feDisplacementMap 
+                in="blur" 
+                in2="mapped" 
+                scale="${controls.dispScale.value}" 
+                xChannelSelector="${controls.xChannel.value}" 
+                yChannelSelector="${controls.yChannel.value}" 
+                result="displaced">
+            </feDisplacementMap>
+            <feSpecularLighting 
+                in="mapped" 
+                surfaceScale="${controls.surfaceScale.value}" 
+                specularConstant="${controls.specConstant.value}" 
+                specularExponent="${controls.specExponent.value}" 
+                lighting-color="${controls.lightingColor.value}" 
+                result="specLight">
+                <fePointLight x="${controls.lightX.value}" y="${controls.lightY.value}" z="${controls.lightZ.value}" />
+            </feSpecularLighting>
+            <feComposite 
+                in="specLight" 
+                in2="displaced" 
+                operator="arithmetic" 
+                k1="0" k2="1" k3="1" k4="0" 
+                result="lit">
+            </feComposite>
+            <feColorMatrix 
+                type="matrix" 
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 0.8 0"
+                result="tinted">
+            </feColorMatrix>
+            <feBlend in="tinted" in2="SourceGraphic" mode="normal" />
+        </filter>
+    </defs>
+</svg>
+
+<button class="liquidglass-button">
+    ${controls.buttonText.value.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+</button>`;
+        }
+
+        function downloadHTML() {
+            const htmlContent = generateButtonHTML();
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'liquidglass-button.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function resetDefaults() {
+            controls.buttonText.value = 'Click Me';
+            controls.fontSize.value = 24;
+            controls.textColor.value = '#ffffff';
+            controls.bgOpacity.value = 0.15;
+            controls.bgColor.value = '#ffffff';
+            controls.backdropBlur.value = 20;
+            controls.gaussianBlur.value = 2;
+            controls.turbFreq.value = 0.01;
+            controls.turbOctaves.value = 2;
+            controls.turbSeed.value = 5;
+            controls.turbType.value = 'fractalNoise';
+            controls.dispScale.value = 50;
+            controls.xChannel.value = 'R';
+            controls.yChannel.value = 'G';
+            controls.surfaceScale.value = 5;
+            controls.specConstant.value = 1;
+            controls.specExponent.value = 100;
+            controls.lightingColor.value = '#ffffff';
+            controls.lightX.value = -200;
+            controls.lightY.value = -200;
+            controls.lightZ.value = 300;
+            controls.borderWidth.value = 1;
+            controls.borderOpacity.value = 0.3;
+            controls.borderRadius.value = 40;
+            controls.shadowBlur.value = 32;
+            controls.shadowOpacity.value = 0.2;
+            
+            updateGlassEffect();
+        }
+
+        // Add event listeners
+        Object.values(controls).forEach(control => {
+            control.addEventListener('input', updateGlassEffect);
+        });
+
+        // Initial render
+        updateGlassEffect();
+    </script>
+</body>
+</html>
